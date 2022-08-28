@@ -1,9 +1,9 @@
 package dev.duque.nttdata;
 
 
-import dev.duque.nttdata.dtos.FilmsDTO;
-import dev.duque.nttdata.models.FilmsModel;
-import dev.duque.nttdata.repositories.FilmsRepository;
+import dev.duque.nttdata.modules.films.dtos.CreateFilmDTO;
+import dev.duque.nttdata.modules.films.entities.Film;
+import dev.duque.nttdata.modules.films.repositories.FilmsRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,7 +50,7 @@ public class FilmIntegrationTest {
     @Test
     public void shouldBeAbleToListAllFilms() throws Exception{
 
-        FilmsDTO dto = new FilmsDTO();
+        CreateFilmDTO dto = new CreateFilmDTO();
         dto.setTitle("Teste");
         dto.setEpisodeId(1);
         dto.setOpeningCrawl("Teste");
@@ -59,7 +59,7 @@ public class FilmIntegrationTest {
         dto.setReleaseDate("Teste");
         dto.setUrl("Teste");
 
-        FilmsModel model = new FilmsModel();
+        Film model = new Film();
         model.version = 1;
         model.setCreatedAt(LocalDateTime.now());
         model.setUpdatedAt(LocalDateTime.now());

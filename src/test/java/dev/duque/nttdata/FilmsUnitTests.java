@@ -1,9 +1,13 @@
 package dev.duque.nttdata;
 
-import dev.duque.nttdata.dtos.FilmsDTO;
-import dev.duque.nttdata.models.FilmsModel;
-import dev.duque.nttdata.repositories.FilmsRepository;
-import dev.duque.nttdata.services.FilmsService;
+import dev.duque.nttdata.modules.films.dtos.CreateFilmDTO;
+import dev.duque.nttdata.modules.films.dtos.UpdateFilmByEpisodeDTO;
+import dev.duque.nttdata.modules.films.entities.Film;
+import dev.duque.nttdata.modules.films.repositories.FilmsRepository;
+import dev.duque.nttdata.modules.films.useCases.createFilmUseCase.CreateFilmUseCase;
+import dev.duque.nttdata.modules.films.useCases.findFilmByEpisode.FindFilmByEpisodeUseCase;
+import dev.duque.nttdata.modules.films.useCases.listAllFilmUseCase.ListAllFilmsUseCase;
+import dev.duque.nttdata.modules.films.useCases.updateFilmUseCase.UpdateFilmByEpisodeUseCase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
@@ -11,6 +15,8 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -28,13 +34,22 @@ public class FilmsUnitTests {
 	private FilmsRepository filmsRepository;
 
 	@Autowired
-	private FilmsService service;
+	private CreateFilmUseCase createFilmUseCase;
+
+	@Autowired
+	private UpdateFilmByEpisodeUseCase updateFilmByEpisodeUseCase;
+
+	@Autowired
+	private ListAllFilmsUseCase listAllFilmsUseCase;
+
+	@Autowired
+	private FindFilmByEpisodeUseCase findFilmByEpisodeUseCase;
 
 	@Test
 	@DisplayName("Should be able to create a new film")
 	public void itShouldBeAbleToCreateANewMovie() throws Exception {
 
-		FilmsDTO dto = new FilmsDTO();
+		CreateFilmDTO dto = new CreateFilmDTO();
 		dto.setTitle("Teste");
 		dto.setEpisodeId(1);
 		dto.setOpeningCrawl("Teste");
@@ -43,32 +58,25 @@ public class FilmsUnitTests {
 		dto.setReleaseDate("Teste");
 		dto.setUrl("Teste");
 
-		FilmsModel model = new FilmsModel();
-		model.version = 1;
-		model.setCreatedAt(LocalDateTime.now());
-		model.setUpdatedAt(LocalDateTime.now());
+		createFilmUseCase.execute(dto);
 
-		BeanUtils.copyProperties(dto, model);
+		assertEquals(1, filmsRepository.findAll().size());
 
-		service.save(model);
-
-		assertEquals(1, service.findAll().size());
-
-		assertEquals(1, service.findAll().get(0).getEpisodeId());
-		assertEquals("Teste", service.findAll().get(0).getTitle());
-		assertEquals("Teste", service.findAll().get(0).getOpeningCrawl());
-		assertEquals("Teste", service.findAll().get(0).getDirector());
-		assertEquals("Teste", service.findAll().get(0).getProducer());
-		assertEquals("Teste", service.findAll().get(0).getReleaseDate());
-		assertEquals("Teste", service.findAll().get(0).getUrl());
-		assertEquals(1, service.findAll().get(0).getVersion());
+		assertEquals(1, filmsRepository.findAll().get(0).getEpisodeId());
+		assertEquals("Teste", filmsRepository.findAll().get(0).getTitle());
+		assertEquals("Teste", filmsRepository.findAll().get(0).getOpeningCrawl());
+		assertEquals("Teste", filmsRepository.findAll().get(0).getDirector());
+		assertEquals("Teste", filmsRepository.findAll().get(0).getProducer());
+		assertEquals("Teste", filmsRepository.findAll().get(0).getReleaseDate());
+		assertEquals("Teste", filmsRepository.findAll().get(0).getUrl());
+		assertEquals(1, filmsRepository.findAll().get(0).getVersion());
 	}
 
 	@Test
 	@DisplayName("Should be able to update a film")
 	public void itShouldBeAbleToUpdateAFilm() throws Exception {
 
-		FilmsDTO dto = new FilmsDTO();
+		CreateFilmDTO dto = new CreateFilmDTO();
 		dto.setTitle("Teste");
 		dto.setEpisodeId(1);
 		dto.setOpeningCrawl("Teste");
@@ -77,30 +85,25 @@ public class FilmsUnitTests {
 		dto.setReleaseDate("Teste");
 		dto.setUrl("Teste");
 
-		FilmsModel model = new FilmsModel();
-		model.version = 1;
-		model.setCreatedAt(LocalDateTime.now());
-		model.setUpdatedAt(LocalDateTime.now());
+		createFilmUseCase.execute(dto);
 
-		BeanUtils.copyProperties(dto, model);
+		UpdateFilmByEpisodeDTO updateDto = new UpdateFilmByEpisodeDTO();
 
-		service.save(model);
+		BeanUtils.copyProperties(dto, updateDto);
 
-		FilmsModel model2 = service.findByTitleWithLock("Teste").orElse(null);
+		updateDto.setTitle("Teste 2");
 
-		model2.setTitle("Teste2");
+		updateFilmByEpisodeUseCase.executeWithLock(1, updateDto);
 
-		service.save(model2);
-
-		assertEquals("Teste2", service.findByTitleWithLock("Teste2").orElse(null).getTitle());
-
+		assertEquals("Teste 2", filmsRepository.findAll().get(1).getTitle());
+		assertEquals(2, filmsRepository.findAll().get(1).getVersion());
 	}
 
 	@Test
 	@DisplayName("Should be able to list all films")
 	public void shouldBeAbleToListAllFilms() throws Exception {
 
-		FilmsDTO dto = new FilmsDTO();
+		CreateFilmDTO dto = new CreateFilmDTO();
 		dto.setTitle("Teste");
 		dto.setEpisodeId(1);
 		dto.setOpeningCrawl("Teste");
@@ -109,32 +112,18 @@ public class FilmsUnitTests {
 		dto.setReleaseDate("Teste");
 		dto.setUrl("Teste");
 
-		FilmsModel model = new FilmsModel();
-		model.version = 1;
-		model.setCreatedAt(LocalDateTime.now());
-		model.setUpdatedAt(LocalDateTime.now());
+		createFilmUseCase.execute(dto);
 
-		BeanUtils.copyProperties(dto, model);
+		Page page = listAllFilmsUseCase.execute(Pageable.unpaged());
 
-		service.save(model);
-
-		assertEquals(1, service.findAll().size());
-		assertEquals(1, service.findAll().get(0).getEpisodeId());
-		assertEquals("Teste", service.findAll().get(0).getTitle());
-		assertEquals("Teste", service.findAll().get(0).getOpeningCrawl());
-		assertEquals("Teste", service.findAll().get(0).getDirector());
-		assertEquals("Teste", service.findAll().get(0).getProducer());
-		assertEquals("Teste", service.findAll().get(0).getReleaseDate());
-		assertEquals("Teste", service.findAll().get(0).getUrl());
-		assertEquals(1, service.findAll().get(0).getVersion());
-
+		assertEquals(1, page.getTotalElements());
 	}
 
 	@Test
-	@DisplayName("Should be able to find a film by title")
+	@DisplayName("Should be able to find a film by episode")
 	public void shouldBeAbleToFindAFilmByTitle() throws Exception {
 
-		FilmsDTO dto = new FilmsDTO();
+		CreateFilmDTO dto = new CreateFilmDTO();
 		dto.setTitle("Teste");
 		dto.setEpisodeId(1);
 		dto.setOpeningCrawl("Teste");
@@ -143,61 +132,13 @@ public class FilmsUnitTests {
 		dto.setReleaseDate("Teste");
 		dto.setUrl("Teste");
 
-		FilmsModel model = new FilmsModel();
-		model.version = 1;
-		model.setCreatedAt(LocalDateTime.now());
-		model.setUpdatedAt(LocalDateTime.now());
+		createFilmUseCase.execute(dto);
 
-		BeanUtils.copyProperties(dto, model);
-
-		service.save(model);
-
-		assertEquals(1, service.findByTitleWithLock("Teste").get().getEpisodeId());
-		assertEquals("Teste", service.findByTitleWithLock("Teste").get().getTitle());
-		assertEquals("Teste", service.findByTitleWithLock("Teste").get().getOpeningCrawl());
-		assertEquals("Teste", service.findByTitleWithLock("Teste").get().getDirector());
-		assertEquals("Teste", service.findByTitleWithLock("Teste").get().getProducer());
-		assertEquals("Teste", service.findByTitleWithLock("Teste").get().getReleaseDate());
-		assertEquals("Teste", service.findByTitleWithLock("Teste").get().getUrl());
-		assertEquals(1, service.findByTitleWithLock("Teste").get().getVersion());
-
+		assertEquals(1, findFilmByEpisodeUseCase.execute(1).get().getEpisodeId());
+		assertEquals(1, findFilmByEpisodeUseCase.execute(1).get().getVersion());
+		assertEquals("Teste", findFilmByEpisodeUseCase.execute(1).get().getTitle());
+		assertEquals("Teste", findFilmByEpisodeUseCase.execute(1).get().getReleaseDate());
+		assertEquals("Teste", findFilmByEpisodeUseCase.execute(1).get().getUrl());
 	}
-
-	@Test
-	@DisplayName("Should be able to find a film by episode id")
-	public void shouldBeAbleToFindAFilmByEpisodeId() throws Exception {
-
-		FilmsDTO dto = new FilmsDTO();
-		dto.setTitle("Teste");
-		dto.setEpisodeId(1);
-		dto.setOpeningCrawl("Teste");
-		dto.setDirector("Teste");
-		dto.setProducer("Teste");
-		dto.setReleaseDate("Teste");
-		dto.setUrl("Teste");
-
-		FilmsModel model = new FilmsModel();
-		model.version = 1;
-		model.setCreatedAt(LocalDateTime.now());
-		model.setUpdatedAt(LocalDateTime.now());
-
-		BeanUtils.copyProperties(dto, model);
-
-		service.save(model);
-
-		assertEquals(1, service.findByEpisodeWithLock(1).get().getEpisodeId());
-		assertEquals("Teste", service.findByEpisodeWithLock(1).get().getTitle());
-		assertEquals("Teste", service.findByEpisodeWithLock(1).get().getOpeningCrawl());
-		assertEquals("Teste", service.findByEpisodeWithLock(1).get().getDirector());
-		assertEquals("Teste", service.findByEpisodeWithLock(1).get().getProducer());
-		assertEquals("Teste", service.findByEpisodeWithLock(1).get().getReleaseDate());
-		assertEquals("Teste", service.findByEpisodeWithLock(1).get().getUrl());
-		assertEquals(1, service.findByEpisodeWithLock(1).get().getVersion());
-
-	}
-
-
-
-
 
 }

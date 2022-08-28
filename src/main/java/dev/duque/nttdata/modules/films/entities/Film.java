@@ -1,20 +1,16 @@
-package dev.duque.nttdata.models;
+package dev.duque.nttdata.modules.films.entities;
 
-import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Entity
 @Data
-@NoArgsConstructor
 @Table(name = "TB_FILMS")
-public class FilmsModel {
+public class Film {
 
     private static final long serialVersionUID = 1L;
     @Id
