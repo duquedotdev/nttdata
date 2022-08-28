@@ -4,13 +4,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Data
 @Table(name = "TB_FILMS")
-public class Film {
+public class Film implements Serializable {
 
     private static final long serialVersionUID = 1L;
     @Id
